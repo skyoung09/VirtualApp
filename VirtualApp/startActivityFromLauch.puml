@@ -20,6 +20,8 @@ participant HCallbackStub
 participant VActivityManagerInClient
 participant VClientImpl
 participant AppInstrumentation
+participant ApplicationThread
+participant ActivityThread
 end box
 -> LoadingActivity: launch
 LoadingActivity -> VirtualCore: getLaunchIntent
@@ -27,7 +29,7 @@ VirtualCore -> VPackageManager: queryIntentActivities
 VPackageManager -> VPackageManagerService: queryIntentActivities
 VPackageManagerService --> VPackageManager: List<ResolveInfo>
 VPackageManager --> VirtualCore: List<ResolveInfo>
-VirtualCore --> LoadingActivity: intent
+VirtualCore --> LoadingActivity: Intent
 LoadingActivity -> LoadingActivity: onCreate
 LoadingActivity -> VirtualCore: preOpt
 LoadingActivity -> VActivityManager: startActivity
@@ -54,17 +56,22 @@ ProviderCall --> VActivityManagerService: Bundle
 VActivityManagerService -> VActivityManagerService: attachClient
 VActivityManagerService --> VActivityManagerService: ProcessRecord: performStartProcessLocked
 VActivityManagerService --> ActivityStack: ProcessRecord: startProcessIfNeedLocked
+ActivityStack --> ActivityStack: Intent: startActivityProcess
+note left
+替换后的Intent
+end note
 ActivityStack -> VirtualCoreInServer: startActivity
 
 -> StartActivity: call(hooked)
 StartActivity -> ComponentUtils: isStubComponent
 ComponentUtils --> StartActivity : boolean
--> HCallbackStub: handleLaunchActivity
+-> ApplicationThread: scheduleLaunchActivity
+ActivityThread -> HCallbackStub: handleLaunchActivity
 note right
-修改ActivityClientRecord
+修改ActivityClientRecord，恢复原始的Intent
 end note
 HCallbackStub -> VActivityManagerInClient: onActivityCreate
 VActivityManagerInClient -> VActivityManagerService: onActivityCreated
 VActivityManagerService -> ActivityStack: onActivityCreated
--> AppInstrumentation: callActivityOnCreate
+ActivityThread -> AppInstrumentation: callActivityOnCreate
 @enduml
