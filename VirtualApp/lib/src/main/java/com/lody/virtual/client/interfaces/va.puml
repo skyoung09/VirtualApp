@@ -1,0 +1,280 @@
+@startuml
+interface Injectable {
+    void inject() throws Throwable
+    boolean isEnvBad()
+}
+
+abstract class PatchDelegate<T extends HookDelegate> implements Injectable {
+    protected T hookDelegate
+    protected void onBindHooks()
+    private void addHook(Class<?> hookType)
+    public Hook addHook(Hook hook)
+    protected void afterHookApply(T delegate)
+    public Context getContext()
+    public T getHookDelegate()
+}
+
+abstract class PatchBinderDelegate extends PatchDelegate {
+    protected String serviceName
+    public PatchBinderDelegate(IInterface stub, String serviceName)
+    public PatchBinderDelegate(Class<?> stubClass, String serviceName)
+    public PatchBinderDelegate(HookBinderDelegate hbd, String serviceName)
+}
+
+abstract class Hook {
+    private boolean enable = true
+    public abstract String getName()
+    public boolean beforeCall(Object who, Method method, Object... args)
+    public Object call(Object who, Method method, Object... args)
+    public Object afterCall(Object who, Method method, Object[] args, Object result)
+    public final boolean isAppPkg(String pkg)
+    public final String getHostPkg()
+    protected final PackageManager getPM()
+    protected final Context getHostContext()
+    protected final boolean isAppProcess()
+    protected final boolean isServerProcess()
+    protected final int getVUid()
+    protected final int getAppUserId()
+}
+
+class StaticHook extends Hook {
+    private String mName
+    public StaticHook(String name)
+}
+
+class ReplaceCallingPkgHook extends StaticHook {
+
+}
+
+class ReplaceLastPkgHook extends StaticHook {
+
+}
+
+class ReplaceUidHook extends StaticHook {
+    private final int index
+}
+
+class ReplaceLastUidHook extends StaticHook {
+
+}
+
+class ReplaceSequencePkgHook extends StaticHook {
+    private int sequence
+    public ReplaceSequencePkgHook(String name, int sequence)
+}
+
+class ReplaceSpecPkgHook extends StaticHook {
+    private int index
+}
+
+class ResultStaticHook extends StaticHook {
+    Object mResult
+}
+
+class StartActivity extends Hook {
+
+}
+
+class RegisterReceiver extends Hook {
+    private WeakHashMap<IBinder, IIntentReceiver> mProxyIIntentReceivers
+}
+
+class GetContentProvider extends Hook {
+
+}
+
+interface Patch {
+	Class<?>[] value();
+}
+
+interface ApiLimit {
+    int start() default -1
+    int end() default -1
+}
+
+PatchDelegate ..> Patch
+PatchDelegate ..> ApiLimit
+
+class HookDelegate<T> {
+    private Map<String, Hook> internalHookTable
+    T mBaseInterface
+    T mProxyInterface
+    public Map<String, Hook> getAllHooks()
+    public HookDelegate(T baseInterface, Class<?>... proxyInterfaces)
+    public HookDelegate(T baseInterface)
+    public void copyHooks(HookDelegate from)
+    public Hook addHook(Hook hook)
+    public Hook removeHook(String hookName)
+    public <H extends Hook> H getHook(String name)
+    public T getProxyInterface()
+    public T getBaseInterface()
+}
+
+HookDelegate *--> Hook
+
+class HookHandler implements InvocationHandler {
+
+}
+
+HookDelegate --> HookHandler
+
+class InstrumentationDelegate extends Instrumentation {
+    private Instrumentation base
+}
+
+class AppInstrumentation extends InstrumentationDelegate implements Injectable {
+
+}
+
+class HCallbackHook implements Handler.Callback, Injectable {
+    
+}
+
+note right of HCallbackHook: TODO
+
+class ActivityManagerPatch extends PatchDelegate {
+
+}
+
+class HookBinderDelegate extends HookDelegate implements IBinder {
+    private IBinder mBaseBinder
+    public HookBinderDelegate(Class<?> stubClass, IBinder binder)
+    public HookBinderDelegate(IInterface mBaseInterface)
+    public void replaceService(String name)
+}
+
+ActivityManagerPatch ..> HookBinderDelegate
+
+class PatchManager {
+    private Map<Class<?>, Injectable> injectTable
+    void injectAll() throws Throwable
+    private void injectInternal()
+    private void addPatch(Injectable injectable)
+    public <T extends Injectable> T findPatch(Class<T> clazz)
+    public <T extends Injectable> void checkEnv(Class<T> clazz)
+}
+
+PatchManager ..> PatchDelegate
+
+enum ProcessType {
+    Server,
+    VAppClient,
+    Main,
+    CHILD
+}
+
+interface PhoneInfoDelegate {
+    String getDeviceId(String oldDeviceId, int userId)
+    String getBluetoothAddress(String oldBluetoothAddress, int userId)
+    String getMacAddress(String oldMacAddress, int userId)
+}
+
+interface ComponentDelegate {
+    void beforeActivityCreate(Activity activity)
+    void beforeActivityResume(Activity activity)
+    void beforeActivityPause(Activity activity)
+    void beforeActivityDestroy(Activity activity)
+    void afterActivityCreate(Activity activity)
+    void afterActivityResume(Activity activity)
+    void afterActivityPause(Activity activity)
+    void afterActivityDestroy(Activity activity)
+    void onSendBroadcast(Intent intent)
+}
+
+interface TaskDescriptionDelegate {
+    TaskDescription getTaskDescription(TaskDescription oldTaskDescription)
+}
+
+class InstalledAppInfo implements Parcelable {
+    public String packageName
+    public String apkPath
+    public String libPath
+    public boolean dependSystem
+    public int appId
+}
+
+class InstallResult implements Parcelable {
+    public boolean isSuccess
+    public boolean isUpdate
+    public String packageName
+    public String error
+}
+
+interface IAppObserver {
+    void onNewApp(String pkg)
+    void onRemoveApp(String pkg)
+}
+
+interface IAppRequestListener {
+    void onRequestInstall(in String path)
+    void onRequestUninstall(in String pkg)
+}
+
+interface AppRequestListener {
+    void onRequestInstall(String path)
+    void onRequestUninstall(String pkg)
+}
+
+interface IAppManager {
+    int[] getPackageInstalledUsers(String packageName)
+    void scanApps()
+    InstalledAppInfo getInstalledAppInfo(String pkg, int flags)
+    InstallResult installPackage(String path, int flags)
+    boolean isPackageLaunched(int userId, String packageName)
+    void setPackageHidden(int userId, String packageName, boolean hidden)
+    boolean installPackageAsUser(int userId, String packageName)
+    boolean uninstallPackage(String packageName, int userId)
+    List<InstalledAppInfo> getInstalledApps(int flags)
+    List<InstalledAppInfo> getInstalledAppsAsUser(int userId, int flags)
+    int getInstalledAppCount()
+    boolean isAppInstalled(String packageName)
+    boolean isAppInstalledAsUser(int userId, String packageName)
+
+    void registerObserver(IAppObserver observer)
+    void unregisterObserver(IAppObserver observer)
+
+    void setAppRequestListener(IAppRequestListener listener)
+    void clearAppRequestListener()
+    IAppRequestListener getAppRequestListener()
+}
+
+interface OnEmitShortcutListener {
+    Bitmap getIcon(Bitmap originIcon)
+    String getName(String originName)
+}
+
+class VirtualCore {
+    private PackageManager unHookPackageManager
+    private String hostPkgName
+    private Object mainThread
+    private Context context
+    private String mainProcessName
+    private String processName
+    private ProcessType processType
+    private IAppManager mService
+    private PackageInfo hostPkgInfo
+    private int systemPid
+    private PhoneInfoDelegate phoneInfoDelegate
+    private ComponentDelegate componentDelegate
+    TaskDescriptionDelegate taskDescriptionDelegate
+    public int[] getGids()
+    public Context getContext()
+    public String getHostPkg()
+    public PackageManager getUnHookPackageManager()
+    public void startup(Context context) throws Throwable
+    private void detectProcessType()
+    public void preOpt(String pkg) throws IOException
+    public InstallResult installPackage(String apkPath, int flags)
+    public boolean isAppInstalled(String pkg)
+    public Intent getLaunchIntent(String packageName, int userId)
+    boolean createShortcut(int userId, String packageName, OnEmitShortcutListener listener)
+    public IAppRequestListener getAppRequestListener()
+    public void setAppRequestListener(final AppRequestListener listener)
+    public boolean isPackageLaunched(int userId, String packageName)
+    public boolean installPackageAsUser(int userId, String packageName)
+    public int[] getPackageInstalledUsers(String packageName)
+    public boolean isOutsideInstalled(String packageName)
+}
+
+VirtualCore --> PatchManager
+@enduml

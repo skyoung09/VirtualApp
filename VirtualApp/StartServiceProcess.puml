@@ -1,0 +1,53 @@
+@startuml
+box "Main Process" #LightBlue
+participant SplashActivity
+participant VirtualCore
+participant ServiceManagerNative
+participant ProviderCall
+end box
+box "Server Process" #LightGreen
+participant BinderProvider
+participant DaemonService
+participant VPackageManagerService
+participant VUserManagerService
+participant VActivityManagerService
+participant VAppManagerService
+participant VEnvironment
+participant UidSystem
+participant BroadcastSystem
+participant VNotificationManagerService
+participant VAccountManagerService
+end box
+SplashActivity -> VirtualCore: waitForEngine
+VirtualCore -> ServiceManagerNative: ensureServerStarted
+ServiceManagerNative -> ProviderCall: call
+ProviderCall -> BinderProvider: ensure_created
+BinderProvider -> BinderProvider: onCreate
+BinderProvider -> DaemonService: startup
+BinderProvider -> VPackageManagerService: systemReady
+VPackageManagerService -> VUserManagerService: new
+note right
+    VPackageManagerService和
+    VUserManagerService相结合
+    实现multi-user
+end note
+BinderProvider -> VActivityManagerService: systemReady
+VActivityManagerService -> VActivityManagerService: onCreate
+BinderProvider -> VAppManagerService: systemReady
+VAppManagerService ->VEnvironment: systemReady
+VAppManagerService -> UidSystem: initUidList
+note right
+    加载uid文件，得出插件包名和uid的
+    对应关系，以及下一个可用的uid
+end note
+BinderProvider -> BroadcastSystem: attach
+BinderProvider -> VNotificationManagerService: systemReady
+BinderProvider -> VAppManagerService: scanApps
+note right
+    加载packages.ini文件，得出所有
+    安装过的插件的详细信息（如apk路径
+    、lib路径、包名、是否外部等）
+end note
+BinderProvider -> VAccountManagerService: systemReady
+VAccountManagerService -> VAccountManagerService: readAllAccounts
+@enduml

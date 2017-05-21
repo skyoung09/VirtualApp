@@ -1,0 +1,40 @@
+@startuml
+box "Main Process" #LightBlue
+participant LoadingActivity
+participant VirtualCore
+participant VPackageManager
+participant VActivityManager
+end box
+box "Server Process" #LightGreen
+participant VPackageManagerService
+participant VActivityManagerService
+participant ActivityStack
+participant ProviderCall
+end box
+-> LoadingActivity: launch
+LoadingActivity -> VirtualCore: getLaunchIntent
+VirtualCore -> VPackageManager: queryIntentActivities
+VPackageManager -> VPackageManagerService: queryIntentActivities
+VPackageManagerService --> VPackageManager: List<ResolveInfo>
+VPackageManager --> VirtualCore: List<ResolveInfo>
+VirtualCore --> LoadingActivity: intent
+LoadingActivity -> LoadingActivity: onCreate
+LoadingActivity -> VirtualCore: preOpt
+LoadingActivity -> VActivityManager: startActivity
+VActivityManager -> VirtualCore: resolveActivityInfo
+VActivityManager -> VActivityManager: startActivity
+note left
+(Intent intent, ActivityInfo info,
+IBinder resultTo, Bundle options,
+String resultWho, int requestCode, int userId)
+end note
+VActivityManager -> VActivityManagerService: startActivity
+VActivityManagerService -> ActivityStack: startActivityLocked
+ActivityStack -> ActivityStack: startActivityInNewTaskLocked
+ActivityStack -> ActivityStack: startActivityProcess
+ActivityStack -> VActivityManagerService: startProcessIfNeedLocked
+VActivityManagerService -> VActivityManagerService: queryFreeStubProcessLocked
+VActivityManagerService -> VActivityManagerService: performStartProcessLocked
+VActivityManagerService -> ProviderCall: call
+ProviderCall -> StubContentProvider: initProcess
+@enduml
