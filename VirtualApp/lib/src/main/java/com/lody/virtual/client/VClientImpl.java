@@ -37,7 +37,6 @@ import com.lody.virtual.client.hook.proxies.am.HCallbackStub;
 import com.lody.virtual.client.hook.secondary.ProxyServiceFactory;
 import com.lody.virtual.client.ipc.VActivityManager;
 import com.lody.virtual.client.ipc.VPackageManager;
-import com.lody.virtual.client.ipc.VirtualStorageManager;
 import com.lody.virtual.client.stub.StubManifest;
 import com.lody.virtual.helper.compat.BuildCompat;
 import com.lody.virtual.helper.compat.StorageManagerCompat;
@@ -362,18 +361,6 @@ public final class VClientImpl extends IVClient.Stub {
         NativeEngine.redirectDirectory("/data/user/0/" + info.packageName + "/lib/", libPath);
 
         NativeEngine.readOnly(VEnvironment.getDataAppDirectory().getPath());
-        VirtualStorageManager vsManager = VirtualStorageManager.get();
-        String vsPath = vsManager.getVirtualStorage(info.packageName, userId);
-        boolean enable = vsManager.isVirtualStorageEnable(info.packageName, userId);
-        if (enable && vsPath != null) {
-            File vsDirectory = new File(vsPath);
-            if (vsDirectory.exists() || vsDirectory.mkdirs()) {
-                HashSet<String> mountPoints = getMountPoints();
-                for (String mountPoint : mountPoints) {
-                    NativeEngine.redirectDirectory(mountPoint, vsPath);
-                }
-            }
-        }
         NativeEngine.hook();
     }
 
