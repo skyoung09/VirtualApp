@@ -10,6 +10,16 @@ participant VPackageManagerService
 participant VActivityManagerService
 participant ActivityStack
 participant ProviderCall
+participant VirtualCoreInServer
+participant StartActivity
+participant ComponentUtils
+end box
+box "Client Process" #LightPink
+participant StubContentProvider
+participant HCallbackStub
+participant VActivityManagerInClient
+participant VClientImpl
+participant AppInstrumentation
 end box
 -> LoadingActivity: launch
 LoadingActivity -> VirtualCore: getLaunchIntent
@@ -22,6 +32,7 @@ LoadingActivity -> LoadingActivity: onCreate
 LoadingActivity -> VirtualCore: preOpt
 LoadingActivity -> VActivityManager: startActivity
 VActivityManager -> VirtualCore: resolveActivityInfo
+VirtualCore --> VActivityManager: ActivityInfo
 VActivityManager -> VActivityManager: startActivity
 note left
 (Intent intent, ActivityInfo info,
@@ -37,4 +48,23 @@ VActivityManagerService -> VActivityManagerService: queryFreeStubProcessLocked
 VActivityManagerService -> VActivityManagerService: performStartProcessLocked
 VActivityManagerService -> ProviderCall: call
 ProviderCall -> StubContentProvider: initProcess
+StubContentProvider -> VClientImpl: initProcess
+StubContentProvider --> ProviderCall: Bundle
+ProviderCall --> VActivityManagerService: Bundle
+VActivityManagerService -> VActivityManagerService: attachClient
+VActivityManagerService --> VActivityManagerService: ProcessRecord: performStartProcessLocked
+VActivityManagerService --> ActivityStack: ProcessRecord: startProcessIfNeedLocked
+ActivityStack -> VirtualCoreInServer: startActivity
+
+-> StartActivity: call(hooked)
+StartActivity -> ComponentUtils: isStubComponent
+ComponentUtils --> StartActivity : boolean
+-> HCallbackStub: handleLaunchActivity
+note right
+修改ActivityClientRecord
+end note
+HCallbackStub -> VActivityManagerInClient: onActivityCreate
+VActivityManagerInClient -> VActivityManagerService: onActivityCreated
+VActivityManagerService -> ActivityStack: onActivityCreated
+-> AppInstrumentation: callActivityOnCreate
 @enduml
