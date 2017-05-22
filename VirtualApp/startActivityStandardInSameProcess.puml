@@ -1,0 +1,48 @@
+@startuml
+box "Client Process" #LightPink
+participant StartActivity
+participant HCallbackStub
+participant VClientImpl
+participant AppInstrumentation
+participant ApplicationThread
+participant ActivityThread
+participant VActivityManager
+end box
+
+box "Server Process" #LightGreen
+participant VPackageManagerService
+participant VActivityManagerService
+participant ActivityStack
+participant ProviderCall
+participant VirtualCoreInServer
+participant ComponentUtils
+end box
+
+box "AMS" #LightBlue
+participant AMS
+end box
+
+-> StartActivity: call(hooked)
+StartActivity -> VActivityManager: startActivity
+VActivityManager -> VActivityManagerService : startActivity
+VActivityManagerService -> ActivityStack: startActivityLocked
+ActivityStack -> ActivityStack: startActivityProcess
+ActivityStack -> VActivityManagerService: startProcessIfNeedLocked
+ActivityStack --> ActivityStack: Intent: startActivityProcess
+note left
+替换后的Intent
+end note
+ActivityStack -> ActivityStack: startActivityFromSourceTask
+ActivityStack -> ActivityStack: realStartActivityLocked
+ActivityStack -> AMS: startActivity
+
+-> ApplicationThread: scheduleLaunchActivity
+ActivityThread -> HCallbackStub: handleLaunchActivity
+note right
+修改ActivityClientRecord，恢复原始的Intent
+end note
+HCallbackStub -> VActivityManager: onActivityCreate
+VActivityManager -> VActivityManagerService: onActivityCreated
+VActivityManagerService -> ActivityStack: onActivityCreated
+ActivityThread -> AppInstrumentation: callActivityOnCreate
+@enduml
