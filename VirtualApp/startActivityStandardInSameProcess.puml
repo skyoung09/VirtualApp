@@ -34,7 +34,10 @@ note left
 end note
 ActivityStack -> ActivityStack: startActivityFromSourceTask
 ActivityStack -> ActivityStack: realStartActivityLocked
-ActivityStack -> AMS: startActivity
+
+-> StartActivity: call(hooked)
+StartActivity -> ComponentUtils: isStubComponent
+ComponentUtils --> StartActivity : boolean
 
 -> ApplicationThread: scheduleLaunchActivity
 ActivityThread -> HCallbackStub: handleLaunchActivity
