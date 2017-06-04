@@ -30,4 +30,7 @@ VActivityManager -> VActivityManagerService: serviceDoneExecuting
 VActivityManagerService -> ApplicationThread: scheduleServiceArgs
 ApplicationThread -> ActivityThread: handleServiceArgs
 ActivityThread -> Service: onStartCommand
+-> ServiceDoneExecuting: call(hooked)
+ServiceDoneExecuting -> VActivityManager: serviceDoneExecuting
+VActivityManager -> VActivityManagerService: serviceDoneExecuting
 @enduml
