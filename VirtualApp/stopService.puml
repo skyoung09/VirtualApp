@@ -1,0 +1,27 @@
+@startuml
+box "Client Process" #LightPink
+participant StopService
+participant VirtualCore
+participant ApplicationThread
+participant ActivityThread
+participant VActivityManager
+participant Service
+participant ServiceDoneExecuting
+end box
+
+box "Server Process" #LightGreen
+participant VActivityManagerService
+end box
+
+-> StopService: call(hooked)
+StopService -> VActivityManager: stopService
+VActivityManager -> VActivityManagerService : stopService
+VActivityManagerService -> VActivityManagerService: findRecordLocked
+VActivityManagerService --> VActivityManagerService: ServiceRecord
+VActivityManagerService -> ApplicationThread: scheduleStopService
+ApplicationThread -> ActivityThread: handleStopService
+ActivityThread -> Service: onDestroy
+-> ServiceDoneExecuting: call(hooked)
+ServiceDoneExecuting -> VActivityManager: serviceDoneExecuting
+VActivityManager -> VActivityManagerService: serviceDoneExecuting
+@enduml
