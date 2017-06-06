@@ -1,0 +1,29 @@
+@startuml
+box "Client Process" #LightPink
+participant StopServiceToken
+participant ApplicationThread
+participant ActivityThread
+participant VActivityManager
+participant Service
+participant ServiceDoneExecuting
+end box
+
+box "Server Process" #LightGreen
+participant VActivityManagerService
+end box
+
+-> StopServiceToken: call(hooked)
+StopServiceToken -> VActivityManager: isVAServiceToken
+VActivityManager -> VActivityManagerService : isVAServiceToken
+VActivityManagerService --> VActivityManagerService: boolean
+VActivityManagerService --> VActivityManager: boolean
+VActivityManager --> StopServiceToken: boolean
+StopServiceToken -> VActivityManager: stopServiceToken
+VActivityManager -> VActivityManagerService : stopServiceToken
+VActivityManagerService -> ApplicationThread: scheduleStopService
+ApplicationThread -> ActivityThread: handleStopService
+ActivityThread -> Service: onDestroy
+-> ServiceDoneExecuting: call(hooked)
+ServiceDoneExecuting -> VActivityManager: serviceDoneExecuting
+VActivityManager -> VActivityManagerService: serviceDoneExecuting
+@enduml
