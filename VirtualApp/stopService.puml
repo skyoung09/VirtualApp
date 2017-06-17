@@ -11,6 +11,7 @@ end box
 
 box "Server Process" #LightGreen
 participant VActivityManagerService
+participant ServiceRecord
 end box
 
 -> StopService: call(hooked)
@@ -18,10 +19,19 @@ StopService -> VActivityManager: stopService
 VActivityManager -> VActivityManagerService : stopService
 VActivityManagerService -> VActivityManagerService: findRecordLocked
 VActivityManagerService --> VActivityManagerService: ServiceRecord
+VActivityManagerService -> ServiceRecord: hasAutoCreateConnections
+ServiceRecord --> VActivityManagerService: boolean
+VActivityManagerService -> ApplicationThread: scheduleUnbindService
+note left
+处理非AUTO_CREATE模式的bindService
+end note
 VActivityManagerService -> ApplicationThread: scheduleStopService
 ApplicationThread -> ActivityThread: handleStopService
 ActivityThread -> Service: onDestroy
 -> ServiceDoneExecuting: call(hooked)
 ServiceDoneExecuting -> VActivityManager: serviceDoneExecuting
 VActivityManager -> VActivityManagerService: serviceDoneExecuting
+note right
+移除ServiceRecord
+end note
 @enduml
