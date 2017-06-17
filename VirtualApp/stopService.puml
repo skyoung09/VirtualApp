@@ -19,6 +19,7 @@ StopService -> VActivityManager: stopService
 VActivityManager -> VActivityManagerService : stopService
 VActivityManagerService -> VActivityManagerService: findRecordLocked
 VActivityManagerService --> VActivityManagerService: ServiceRecord
+VActivityManagerService -> VActivityManagerService: stopServiceCommon
 VActivityManagerService -> ServiceRecord: hasAutoCreateConnections
 ServiceRecord --> VActivityManagerService: boolean
 VActivityManagerService -> ApplicationThread: scheduleUnbindService
