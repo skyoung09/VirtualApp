@@ -27,6 +27,7 @@ ApplicationThread -> ActivityThread: handleCreateService
 -> ServiceDoneExecuting: call(hooked)
 ServiceDoneExecuting -> VActivityManager: serviceDoneExecuting
 VActivityManager -> VActivityManagerService: serviceDoneExecuting
+VActivityManagerService -> VActivityManagerService: requestServiceBindingsLocked
 VActivityManagerService -> ApplicationThread: scheduleServiceArgs
 ApplicationThread -> ActivityThread: handleServiceArgs
 ActivityThread -> Service: onStartCommand
