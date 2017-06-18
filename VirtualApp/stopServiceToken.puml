@@ -20,10 +20,20 @@ VActivityManagerService --> VActivityManager: boolean
 VActivityManager --> StopServiceToken: boolean
 StopServiceToken -> VActivityManager: stopServiceToken
 VActivityManager -> VActivityManagerService : stopServiceToken
+VActivityManagerService -> VActivityManagerService: stopServiceCommon
+VActivityManagerService -> ServiceRecord: hasAutoCreateConnections
+ServiceRecord --> VActivityManagerService: boolean
+VActivityManagerService -> ApplicationThread: scheduleUnbindService
+note left
+处理非AUTO_CREATE模式的bindService
+end note
 VActivityManagerService -> ApplicationThread: scheduleStopService
 ApplicationThread -> ActivityThread: handleStopService
 ActivityThread -> Service: onDestroy
 -> ServiceDoneExecuting: call(hooked)
 ServiceDoneExecuting -> VActivityManager: serviceDoneExecuting
 VActivityManager -> VActivityManagerService: serviceDoneExecuting
+note right
+移除ServiceRecord
+end note
 @enduml
