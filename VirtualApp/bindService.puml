@@ -1,0 +1,42 @@
+@startuml
+box "Client Process" #LightPink
+participant BindService
+participant ServiceConnectionDelegate
+participant VirtualCore
+participant ApplicationThread
+participant ActivityThread
+participant PublishService
+participant VActivityManager
+participant Service
+participant ServiceDoneExecuting
+end box
+
+box "Server Process" #LightGreen
+participant VActivityManagerService
+participant IServiceConnection
+end box
+
+-> BindService: call(hooked)
+BindService -> ServiceConnectionDelegate: getDelegate
+ServiceConnectionDelegate --> BindService: IServiceConnection.Stub
+BindService -> VActivityManager: bindService
+VActivityManager -> VActivityManagerService : bindService
+VActivityManagerService -> VActivityManagerService: resolveServiceInfo
+VActivityManagerService --> VActivityManagerService: ServiceInfo
+VActivityManagerService -> VActivityManagerService: startServiceCommon
+note right
+Service未启动，并且使用了BIND_AUTO_CREATE模式
+end note
+VActivityManagerService -> VActivityManagerService: addRecord
+note right
+Service未启动，并且使用了非BIND_AUTO_CREATE模式，需要记录此次bind
+end note
+VActivityManagerService -> ApplicationThread: scheduleBindService
+ApplicationThread -> ActivityThread: handleBindService
+ActivityThread -> Service: onBind
+-> PublishService: call(hooked)
+PublishService -> VActivityManager: publishService
+VActivityManager -> VActivityManagerService: publishService
+VActivityManagerService -> VActivityManagerService: connectService
+VActivityManagerService -> IServiceConnection: connected
+@enduml
